@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>  <!-- spring的配置文件 -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+                    http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+                    http://www.springframework.org/schema/mvc 
+                    http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+                    http://www.springframework.org/schema/context 
+                    http://www.springframework.org/schema/context/spring-context-4.3.xsd
+                    http://www.springframework.org/schema/aop 
+                    http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+                    http://www.springframework.org/schema/tx 
+                    http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+     <context:property-placeholder location="classpath:db.properties"/>
+     <bean id="dataSource"
+		class="org.apache.commons.dbcp2.BasicDataSource">
+		<!-- 数据库驱动 -->
+		<property name="driverClassName" value="${jdbc.driver}"/>
+		<!-- 连接数据库url -->
+		<property name="url" value="${jdbc.url}"/>
+		<!-- 连接数据库用户名 -->
+		<property name="username" value="${jdbc.username}"/>
+		<!-- 连接数据库密码 -->
+		<property name="password" value="${jdbc.password}"/>
+		<property name="maxTotal" value="${jdbc.maxTotal}"/>
+		<property name="maxIdle" value="${jdbc.maxIdle}"/>
+		<property name="initialSize" value="${jdbc.initialSize}"/>
+	</bean>
+	<!-- 4,事务管理器 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	<!-- 5,编写通知  -->
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<!-- 传播行为name= * 表示任意方法的名称 -->
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="insert*" propagation="REQUIRED" />
+			<tx:method name="add*" propagation="REQUIRED" />
+			<tx:method name="create*" propagation="REQUIRED" />
+			<tx:method name="delete*" propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="find*" propagation="SUPPORTS" read-only="true"/>
+			<tx:method name="select*" propagation="SUPPORTS" read-only="true"/>
+			<tx:method name="get*" propagation="SUPPORTS" read-only="true"/>
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<!-- 切入点 -->
+		<aop:pointcut expression="execution(* cn.edu.cqcet.yd1701.team10.core.service.*.*(..))"
+			id="txPointCut" />
+		<!-- 切面：将切入点于通知整合 -->
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointCut" />
+	</aop:config>
+	<!-- 配置Mybatis的工厂 -->
+	<bean class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="configLocation" value="classpath:mybatis-config.xml"/>
+	</bean>
+	<!-- 接口开发，扫描cn.edu.cqcet.yd1701.team10.core.dao包，写在此包下的接口即可被扫描到 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="cn.edu.cqcet.yd1701.team10.core.dao"/>
+	</bean>
+	<!-- 配置扫描@service注解 -->
+	<context:component-scan base-package="cn.edu.cqcet.yd1701.team10.core.service"/>
+</beans>
+                    
